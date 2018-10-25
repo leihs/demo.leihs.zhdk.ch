@@ -33,12 +33,12 @@ jobs:
             check-head-of-master:
               body: git fetch && test $(git log -n 1 --pretty=%H HEAD -- ) == $(git log -n 1 --pretty=%H origin/master -- )
 
-            unlock:
-              body: git crypt unlock && ls -la . && ls -R group_vars
+            # unlock:
+            #   body: git crypt unlock && ls -la . && ls -R group_vars
 
             deploy:
               start_when:
-                git-crypt is unlocked: {script_key: unlock}
+                # git-crypt is unlocked: {script_key: unlock}
                 only when we are on the head of master branch: {script_key: check-head-of-master}
               timeout: 30 minutes
               body: |
