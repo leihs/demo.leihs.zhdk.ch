@@ -49,7 +49,7 @@ jobs:
                 ./scripts/restore-from-backup && \
                 echo OK
 
-            certbot:
-              start_when: {after: {script_key: deploy}}
-              body: |
-                ssh demo.leihs.zhdk.ch 'certbot run --apache -n --redirect --hsts --uir --strict-permissions -d demo.leihs.zhdk.ch'
+            # certbot:
+            #   start_when: {after: {script_key: deploy}}
+            #   body: |
+            #     ssh "$LEIHS_INTERNAL_HOSTNAME" 'certbot run --apache -n --redirect --hsts --uir --strict-permissions -d "$LEIHS_HOSTNAME"'
