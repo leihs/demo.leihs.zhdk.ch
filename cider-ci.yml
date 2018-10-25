@@ -15,6 +15,7 @@ jobs:
       task_defaults:
         max_trials: 1
         aggregate_state: satisfy-last
+        git_options: { submodules: { include_match: ^.*$ } }
         traits:
           Ansible 2: yes
           git-crypt: yes
