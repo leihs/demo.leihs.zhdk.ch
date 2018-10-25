@@ -1,6 +1,6 @@
 smtp_address: localhost
 smtp_port: 25
-smtp_domain: leihs.example.com
+smtp_domain: ${LEIHS_HOSTNAME}
 local_currency_string: CHF
 ldap_config:
 mail_delivery_method: smtp
@@ -9,4 +9,4 @@ smtp_password:
 smtp_enable_starttls_auto: f
 smtp_openssl_verify_mode: 0
 time_zone: Bern
-external_base_url: leihs.example.com # only used in ZHdK context
+external_base_url: ${LEIHS_HOSTNAME} # only used in ZHdK context
