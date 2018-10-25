@@ -2,7 +2,7 @@
 CHANNEL=$1
 
 cd leihs
-git fetch
+git fetch origin
 git submodule foreach --recursive 'git reset --hard HEAD'
 git reset --hard "origin/${CHANNEL}"
-git submodule update --recursive
+git submodule update --recursive --init --force
