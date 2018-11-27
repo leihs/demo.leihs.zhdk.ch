@@ -4,12 +4,12 @@ jobs:
   deploy_leihs:
     name: Deploy Leihs Demo
 
-    run_when:
-      nightly:
-        type: cron
-        value: '0 2 * * *' # 2am UTC === 1am or 2am in Zurich (Summer/Winter)
-        branch_include_match: ^master$
-        rerun: true
+    # run_when:
+    #   nightly:
+    #     type: cron
+    #     value: '0 2 * * *' # 2am UTC === 1am or 2am in Zurich (Summer/Winter)
+    #     branch_include_match: ^master$
+    #     rerun: true
 
     context:
       task_defaults:
