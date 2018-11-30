@@ -19,6 +19,7 @@ jobs:
         traits:
           Ansible 2: yes
           git-crypt: yes
+          g2016: true # only faster machines
 
         environment_variables:
           LEIHS_RELEASE_CHANNEL: 'master' # FIXME: use 'stable'
