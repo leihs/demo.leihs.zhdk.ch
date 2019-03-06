@@ -1,0 +1,21 @@
+# working example configuration to deploy a leihs instance using Cider-CI
+
+jobs:
+  deploy_leihs:
+    name: Deploy Leihs Demo
+
+    context:
+      include: cider-ci/tasks/defaults.yml
+
+      tasks:
+        deploy:
+          exclusive_global_resources:
+            "demo.leihs.zhdk.ch": true
+
+          scripts:
+            deploy:
+              timeout: 30 minutes
+              body: |
+                ./scripts/deploy && \
+                ./scripts/restore-from-backup && \
+                echo OK

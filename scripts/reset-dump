@@ -1,0 +1,1 @@
+cd leihs/deploy && ansible-playbook -i ../../hosts demo-reset-dump_play.yml
