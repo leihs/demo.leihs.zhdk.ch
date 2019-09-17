@@ -9,4 +9,4 @@ smtp_password:
 smtp_enable_starttls_auto: f
 smtp_openssl_verify_mode: 0
 time_zone: Bern
-external_base_url: leihs.example.com # only used in ZHdK context
+external_base_url: https://demo.leihs.zhdk.ch # only used in ZHdK context
