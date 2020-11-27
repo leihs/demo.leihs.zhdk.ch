@@ -1,2 +1,2 @@
 [leihs_server]
-demo.leihs.zhdk.ch ansible_ssh_host='zhdk-leihs-demo.ruby.zhdk.ch'
+demo.leihs.zhdk.ch
