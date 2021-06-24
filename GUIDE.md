@@ -1,135 +1,153 @@
 # **leihs** Hosting Guide
 
-*For more details, see [`leihs_deploy` Project](https://github.com/leihs/leihs_deploy)
-and the [general **leihs** Documentation](https://github.com/leihs/leihs/wiki)*
+_For more details, see [`leihs_deploy` Project](https://github.com/leihs/leihs_deploy)
+and the [general **leihs** Documentation](https://github.com/leihs/leihs/wiki)_
 
 ---
 
 ## setup & install
 
-1. ["Fork" this repository on github](https://github.com/leihs/leihs-instance/fork)
-  *(only required if you want to receive updates as Pull Requests)*
+1. [Generate your own inventory repository by using this template](https://github.com/leihs/leihs-instance/generate)
 
-2. set up inventory on a computer running Linux or macOS (will be the "control machine").  
-   It needs the following software installed: `git`, `ansible`, `Java 8`, `Ruby 2.3`.
-  ```sh
-  which ansible-playbook || echo 'install ansible first!'
-  git clone git@github:yourUserName/leihs-instance my-leihs
-  cd my-leihs
-  sh -c 'git submodule update --init leihs && cd leihs && git submodule update --init --recursive'
-  ```
+1. prepare a fresh server running [Ubuntu 18.04.2 LTS (Bionic Beaver)](https://wiki.ubuntu.com/BionicBeaver/ReleaseNotes) or [Debian 10 (buster)](https://www.debian.org/releases/buster/), and point a domain name to it. Make sure you can connect as root (or use `sudo` to become root):
 
-3. prepare a server running [Debian `stretch`](https://www.debian.org/releases/stretch/),
-  log in as root via SSH and do
-  ```
-  apt install curl build-essential libssl-dev default-jdk ruby libyaml-dev python2.7 python2.7-dev python-pip git libffi-dev
-  ```
+   ```sh
+   # set connection config (all scripts below expect those exported variables!)
+   export LEIHS_HOSTNAME="leihs.example.com"
+   export LEIHS_HOST_USER="root"
 
-4. inventory configuration
-  - prepare inventory files
-    ```
-    # set hostname
-    export LEIHS_HOSTNAME="leihs.example.com"
-    # create hosts file
-    sh -c "echo \"$(cat examples/hosts_example)\"" > hosts
-    # create host_vars
-    sh -c "echo \"$(cat examples/host_vars_example.yml)\"" > "host_vars/${LEIHS_HOSTNAME}.yml"
-    # create settings.yml file
-    sh -c "echo \"$(cat examples/settings.yml)\"" > "settings/${LEIHS_HOSTNAME}.yml"
-    ```
-  - edit global config in file `group_vars/leihs.yml`
-  - edit per-host config in file `host_vars/${LEIHS_HOSTNAME}.yml`
-  - edit per-host leihs settings in file `settings/${LEIHS_HOSTNAME}.yml`
+   # test it
+   ssh "${LEIHS_HOST_USER}@${LEIHS_HOSTNAME}" -- 'test $(id -u) -eq 0 && echo OK || sudo echo OK'
+   ```
 
-5. install with ansible: `./scripts/deploy`
+1. prepare the "control machine" (your personal computer):  
+   Install either [`python3-venv`](https://docs.python.org/3.7/library/venv.html) and [`ruby`](https://www.ruby-lang.org/en/) _or_ [`Docker`](https://www.docker.com/products/docker-desktop).  
+   
+   Example for Debian/Ubuntu:
 
-<!--
-1. setup initial configuration & admin account (choose a better password and save it):
-  ```sh
-  ansible-playbook -i hosts leihs/deploy/play_first-time-setup.yml -e "admin_password=supersecret"
-  ```
--->
+   ```sh
+   apt update && apt install ruby python3-venv
+   ```
 
-6. Leihs is now installed on the given hostname.
-   Open it in your browser and use the form to create the first admin user.  
+1. set up the _inventory_ on the "control machine":
+
+   ```sh
+   git clone https://github.com/leihs/leihs-instance "${LEIHS_HOSTNAME}_hosting"
+   # OR your fork: git clone git@github.com:yourUserName/leihs-instance "${LEIHS_HOSTNAME}_hosting"
+   cd "${LEIHS_HOSTNAME}_hosting"
+   sh -c 'git submodule update --init leihs && cd leihs && git submodule update --init --recursive'
+   ```
+
+   Configure the _inventory_:
+
+   ```sh
+   # create hosts file
+   sh -euc "echo \"$(cat examples/hosts_example)\"" > hosts
+   # create host_vars
+   sh -euc "echo \"$(cat examples/host_vars_example.yml)\"" > "host_vars/${LEIHS_HOSTNAME}.yml"
+   ```
+
+   - edit global config in file `group_vars/leihs_server.yml`
+   - edit per-host config in file `host_vars/${LEIHS_HOSTNAME}.yml`.
+     - If a custom TLS certificate is used, the `leihs_virtual_hosts` config from `group_vars` needs to be overwritten here.
+   - **commit**:
+
+       ```sh
+       git add . && git commit -m "inventory config for ${LEIHS_HOSTNAME}"
+       ```
+
+1. Prepare SSL/TLS certificate (mandatory). To use (the free and recommended) LetsEncrypt + Certbot, follow the [official instructions](https://certbot.eff.org) to install, then use the following comand to interactively obtain a certificate for the first time. If that worked, automated renewals should be set up as well.
+
+   ```sh
+   ssh "${LEIHS_HOST_USER}@${LEIHS_HOSTNAME}" -- "sudo apt-get update && sudo apt-get install certbot -y python3-certbot-apache"
+   ssh "${LEIHS_HOST_USER}@${LEIHS_HOSTNAME}" -- \
+     "sudo certbot certonly --apache --force-interactive -d '${LEIHS_HOSTNAME}'"
+   ```
+
+1. Run the deploy. This will take quite some time, up to an hour.
+   Note that (unlike with previous Leihs releases) by default there will be no compilation happening on the control machine, instead "prebuilt artefacts" are downloaded (though some compilation might still happen on the server on the initial deploy and some updates).
+   See the section ["build cache"](#build-cache) for details and ["build from source"](#build-from-source) if you want to do that instead.
+
+   - `./scripts/deploy`
+   - or, when using Docker: `./scripts/deploy-from-docker`
+
+1. Leihs is now installed on the given hostname.
+   Open it in your browser and use the form to **create the first admin user**.
+
    Add Users and Groups and start using **leihs**! 🎉
 
-<!--
 ## backup
 
-A `master_secret` was created during the installation and put in a text file
-in your repository.
-By default it is git-ignored, so it won't be accidentally pushed to a public
-host (like GitHub).
+A `master_secret.txt` file was created during the installation and put in your inventory repository.
+By default it is git-ignored, so it won't be accidentally pushed to a public host (like GitHub).
 You should either back up your local repository with the secret to a secure place;
 or use [`git-crypt`](https://www.agwa.name/projects/git-crypt/) to add the
-secret to the repository in encrypted form (*recommended*).
--->
+secret to the repository in encrypted form (_recommended_).
 
 ## upgrade
 
 1. update `leihs` submodule reference to latest release
-  - either by accepting a Pull Request (when enabled)
-  - or manually: `./scripts/update_leihs_latest stable`
 
-2. run the setup playbook again: `ansible-playbook -i hosts leihs/deploy/play_setup-and-deploy.yml`
+   - or manually: `./scripts/update_leihs_latest stable`
+
+1. check the release notes for needed changes to the inventory and/or pull in the updates from the template repo:
+
+   ```shell
+   curl -L https://github.com/leihs/leihs-instance/archive/master.tar.gz | tar -xzv --strip=1
+   git commit --all -m 'update inventory from upstream'
+   ```
+
+1. run the deploy playbook again:
+   - `./scripts/deploy-from-docker`
+   - or, when not using Docker: `./scripts/deploy`
 
 ## automatic deployments
 
-***Prerequisite:*** All changed files (configuration etc) must be committed back into the repository,
+**_Prerequisite:_** All changed files (configuration etc) must be committed back into the repository,
 so that it can be shared with other computers.
 That means `git-crypt` must be set up (see below).
 
-*Note* that you can use this fork normally, with one caveat:
+_Note_ that you can use this fork normally, with one caveat:
 **don't edit any files that came with this repository**, or you will have to deal with merge conflicts later on!
 The only exception is `README.md`, we won't touch it because you'll likely want to customize it.
 
-1. add GPG of your trusted CI machine to the repo:
-  ```
-  git crypt add-gpg-user ${CI_GPG_KEY_ID}
-  ```
+1. add GPG of your trusted CI machine to the repo: `git crypt add-gpg-user ${CI_GPG_KEY_ID}`
 
 2. add SSH public key of CI executor to `authorized_keys` of target server
 
 3. set up your CI to `git crypt unlock` und run the deploy script.
-  See `examples/cider-ci.yml` for a working [Cider-CI](https://cider-ci.info) configuration.
+   See `examples/cider-ci.yml` for a working [Cider-CI](https://cider-ci.info) configuration.
 
-## git-crypt
+## build cache
 
-set up and add master secret:
+For each Leihs release, an archive containing the build artefacts is attached to the corresponding [GitHub release](https://github.com/leihs/leihs/releases).
+The default deploy scripts automatically download and extract this to a local directory
+and are configured to use this directory as a cache.
+If needed, this can also be done manually, or in a shell script as shown below. Make sure to replace the version number in the examples for the one you plan to use (the latest stable release for production or the latest release candidate for testing).
 
-```sh
-which git-crypt || echo 'install `git-crypt` first!'
-cp examples/git-crypt/.git{ignore,attributes} .
-git commit .gitignore .gitattributes -m 'setup git-crypt'
-git crypt init
-git crypt add-gpg-user you@example.com
-git add master_secret.txt && git commit -m 'add encrypted secret'
-git crypt status
-```
-
-if needed, set up secret variables:
+1. go to a release page, e.g. [**_`6.0.0`_**](https://github.com/leihs/leihs/releases/tag/6.0.0)
+1. download the archive `build-artefacts.tar.gz` found under "Assets", on the bottom of the page.
+1. extract the archive to a directory, e.g. to `~/Downloads/leihs-`**_`6.0.0`_**
+1. in the shell, set the `LOCAL_CACHE_DIR` environment variable to the directory where the archive was extracted, before running the deploy.
 
 ```sh
-# create hosts file
-sh -c "echo \"$(cat examples/git-crypt/hosts_example)\"" > hosts
-# create host_vars
-sh -c "echo \"$(cat examples/git-crypt/group_vars_secret_example.yml)\"" > group_vars/secrets.yml
-git add group_vars/secrets.yml && git commit -m 'add encrypted secrets'
-git crypt status
+LEIHS_VERSION=6.0.0
+export LOCAL_CACHE_DIR="/tmp/leihs-${LEIHS_VERSION}"
+mkdir -p "$LOCAL_CACHE_DIR"
+curl -L "https://github.com/leihs/leihs/releases/download/${LEIHS_VERSION}/build-artefacts.tar.gz" \
+   | tar -C "$LOCAL_CACHE_DIR" -xvzf -
 ```
 
-## HTTPS
+## build from source
 
-Secure Communications for your users (HTTPS) can be enabled
-by obtaining a TLS certificate and configure apache to use it.
-This can be done easily using `certbot` by [LetsEncrypt](https://letsencrypt.org).
+In case you dont want to use the [prebuilt artifacts](#build-cache), you can build everythings yourself from source on the "control machine".
+You can either setup a build environment manually or use Docker.
 
+The build process depends on several development tools with need to be installed in the right version on the control machine.
+We provide a `Dockerfile` so the whole process can take place in an isolated linux container.
+**We recommend using `Docker` on machines not normally used for software development.**
+_(Note: Docker is only used on your local machine, not on the web server.)_
 
-1. Install `certbot`: `sudo apt-get install python-certbot-apache -t jessie-backports`
-2. Get cert: `certbot certonly --apache -d leihs.example.com`
-3. Configure apache: `certbot run -n --apache --redirect --apache-vhost-root /etc/apache2/leihs -d leihs.example.com`
-  - even more secure (SSL Labs `A+` instead of `A`): `certbot run -n --apache --redirect --hsts --uir --strict-permissions --apache-vhost-root /etc/apache2/leihs -d leihs.example.com`
+- with Docker: Install Docker, for example [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
-If a certificate set up this way is found on the server, the deploy process will automatically use `certbot` for configuration with recommended settings.
-You only have to re-run `certbot` yourself after each deploy if you prefer other settings.
+- manually: Install the following software packages: `git`, `python 2`, `node.js LTS`, `Java 8`, `Ruby 2.3`, .
