@@ -16,6 +16,10 @@ jobs:
             deploy:
               timeout: 30 minutes
               body: |
+                # NOTE: inventory is "standalone", but the ENV vars from CI still apply – so the s3-cache helper tries to upload.
+                #       we could correctly set up ruby, but the better solution is to disable it:
+                unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+
                 ./scripts/deploy && \
                 ./scripts/restore-from-backup && \
                 echo OK
