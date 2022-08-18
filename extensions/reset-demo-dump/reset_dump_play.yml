@@ -26,7 +26,7 @@
       shell: |
         set -eux
         cd /leihs/legacy
-        export PATH=$HOME/.rubies/ruby-{{leihs_database_ruby_version}}/bin:/usr/lib/postgresql/{{postgres_version}}/bin:$PATH
+        export PATH=$HOME/.rubies/ruby-{{leihs_legacy_ruby_version}}/bin:/usr/lib/postgresql/{{postgres_version}}/bin:$PATH
         export RAILS_ENV=production
         export FILE="{{db_dump_tmpfile}}"
         export LEIHS_SECRET="{{leihs_master_secret}}"
