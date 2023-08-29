@@ -1,1 +1,0 @@
-cd leihs/deploy && bin/ansible-playbook -i ../../hosts db-restore_play.yml

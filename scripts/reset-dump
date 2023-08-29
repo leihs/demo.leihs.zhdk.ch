@@ -1,1 +1,0 @@
-cd leihs/deploy && bin/ansible-playbook -i ../../hosts ../../extensions/reset-demo-dump/reset_dump_play.yml

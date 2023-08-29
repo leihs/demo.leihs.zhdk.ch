@@ -1,6 +1,3 @@
-# **leihs** hosting template
+### Replaced
 
-This is a template to set up a [**leihs**](https://github.com/leihs/leihs/wiki) server,
-providing a web-based equipment booking and inventory management system.
-
-## [Read the Guide](./GUIDE.md)
+The ZHdK leihs demo instance is now managed from the [ZHdK Leihs Server-Inventory](https://github.com/zhdk/leihs-server-inventory).

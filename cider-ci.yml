@@ -1,3 +1,0 @@
-include: 
-  - cider-ci/jobs/deploy_leihs.yml
-  - cider-ci/jobs/reset_dump.yml
